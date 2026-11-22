@@ -1,0 +1,487 @@
+<title>Абаттандыру тесті</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Mono&family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
+<style>
+/* Layout: a drawing sheet. A title block sits on top, then one question per sheet, with a survey-ruler progress strip. */
+:root {
+  --bg: #edf0f3;
+  --surface: #ffffff;
+  --ink: #16222e;
+  --muted: #566574;
+  --rule: #c3cbd4;
+  --accent: #0e5a8a;
+  --on-accent: #ffffff;
+  --ok: #16794c;
+  --ok-bg: #e3f3ea;
+  --on-ok: #ffffff;
+  --bad: #b3261e;
+  --bad-bg: #fbe8e6;
+  --on-bad: #ffffff;
+  --font-display: "PT Sans Narrow", "Arial Narrow", Arial, sans-serif;
+  --font-body: "PT Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "PT Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1822; --surface: #15222f; --ink: #e6edf3; --muted: #94a4b4; --rule: #2c3d4e;
+    --accent: #5ab0e6; --on-accent: #08121a;
+    --ok: #4cc38a; --ok-bg: #123021; --on-ok: #07140d;
+    --bad: #ff8f86; --bad-bg: #3b1916; --on-bad: #2a0a07;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1822; --surface: #15222f; --ink: #e6edf3; --muted: #94a4b4; --rule: #2c3d4e;
+  --accent: #5ab0e6; --on-accent: #08121a;
+  --ok: #4cc38a; --ok-bg: #123021; --on-ok: #07140d;
+  --bad: #ff8f86; --bad-bg: #3b1916; --on-bad: #2a0a07;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.45;
+  padding-block: 20px 56px;
+}
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.lbl {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mono { font-family: var(--font-mono); }
+
+/* title block */
+.tb { display: grid; grid-template-columns: 1fr auto auto; border: 1.5px solid var(--ink); background: var(--surface); }
+.tb > div { padding: 10px 14px 12px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tb > div + div { border-left: 1.5px solid var(--ink); }
+.tb .val { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.12; }
+.tb h1.val { font-size: 26px; }
+.tb .val.small { font-family: var(--font-mono); font-weight: 400; font-size: 20px; }
+@media (max-width: 560px) {
+  .tb { grid-template-columns: 1fr 1fr; }
+  .tb > div:first-child { grid-column: 1 / -1; }
+  .tb > div:nth-child(n+2) { border-top: 1.5px solid var(--ink); }
+  .tb > div:nth-child(2) { border-left: 0; }
+}
+
+/* home */
+.home-grid { display: grid; gap: 28px; margin-top: 28px; }
+.sect-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+.toggles { display: grid; gap: 4px; }
+.tg { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
+.tg input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; margin: 0; }
+.big-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn {
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  padding: 12px 18px;
+  min-height: 48px;
+  font-weight: 700;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { color: var(--on-accent); filter: brightness(1.08); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.toc { border-top: 1.5px solid var(--ink); }
+.toc button {
+  display: grid;
+  grid-template-columns: 76px 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 14px 4px;
+}
+.toc button:hover { background: var(--surface); }
+.toc .wk { font-family: var(--font-mono); color: var(--accent); font-weight: 700; }
+.toc .nm { min-width: 0; }
+.toc .ct { font-family: var(--font-mono); color: var(--muted); font-size: 14px; white-space: nowrap; }
+
+/* quiz */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.linkbtn { background: none; border: 0; padding: 8px 0; min-height: 44px; color: var(--accent); font-weight: 700; }
+.linkbtn:hover { text-decoration: underline; }
+.stats { display: flex; gap: 14px; font-family: var(--font-mono); font-size: 14px; }
+.stats .s-ok { color: var(--ok); }
+.stats .s-bad { color: var(--bad); }
+.ruler { display: flex; gap: 3px; align-items: flex-end; height: 18px; margin-bottom: 18px; }
+.ruler i { flex: 1; min-width: 0; height: 10px; background: var(--rule); }
+.ruler.dense { gap: 1px; }
+.ruler.dense i:nth-child(5n) { height: 14px; }
+.ruler.dense i:nth-child(10n) { height: 18px; }
+.ruler i.ok { background: var(--ok); }
+.ruler i.bad { background: var(--bad); }
+.ruler i.cur { background: var(--accent); }
+.sheet { background: var(--surface); border: 1.5px solid var(--ink); padding: 20px 18px 18px; display: grid; gap: 14px; }
+.sheet h2 { font-size: 26px; line-height: 1.2; font-weight: 700; }
+.opts { display: grid; gap: 10px; }
+.opt {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  align-items: start;
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  padding: 12px 14px;
+  min-height: 54px;
+}
+.opt .mk {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--ink);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.opt .tx { padding-top: 4px; min-width: 0; overflow-wrap: anywhere; }
+.opts:not(.locked) .opt:hover { border-color: var(--accent); }
+.opts:not(.locked) .opt:hover .mk { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.opts.locked .opt { cursor: default; }
+.opts.locked .opt:not(.ok):not(.bad) { opacity: .6; }
+.opt.ok { border-color: var(--ok); background: var(--ok-bg); }
+.opt.ok .mk { background: var(--ok); border-color: var(--ok); color: var(--on-ok); }
+.opt.bad { border-color: var(--bad); background: var(--bad-bg); }
+.opt.bad .mk { background: var(--bad); border-color: var(--bad); color: var(--on-bad); }
+.fb { min-height: 26px; font-weight: 700; }
+.fb.ok { color: var(--ok); }
+.fb.bad { color: var(--bad); }
+.nav { display: flex; justify-content: flex-end; }
+.hint { margin-top: 14px; color: var(--muted); font-size: 14px; }
+@media (max-width: 560px) { .hint { display: none; } .nav .btn { width: 100%; } }
+
+/* result */
+.score { display: grid; grid-template-columns: auto 1fr; gap: 6px 24px; align-items: end; margin-top: 28px; padding-bottom: 22px; border-bottom: 1.5px solid var(--ink); }
+.score .big { font-family: var(--font-display); font-weight: 700; font-size: 84px; line-height: .95; }
+.score .big small { font-size: 36px; color: var(--muted); }
+.score .verdict { font-family: var(--font-display); font-size: 26px; font-weight: 700; align-self: center; }
+.score .pct { font-family: var(--font-mono); color: var(--muted); }
+.res-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 30px; }
+.wrong-list { display: grid; gap: 14px; padding: 0; margin: 0; list-style: none; }
+.wrong-list li { background: var(--surface); border: 1.5px solid var(--rule); padding: 14px 16px; display: grid; gap: 8px; }
+.wrong-list .q { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.2; }
+.wrong-list .a { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; }
+.wrong-list .tag { font-family: var(--font-mono); font-size: 12px; font-weight: 700; padding: 1px 6px; }
+.wrong-list .tag.b { background: var(--bad); color: var(--on-bad); }
+.wrong-list .tag.g { background: var(--ok); color: var(--on-ok); }
+.all-ok { padding: 16px; border: 1.5px solid var(--ok); background: var(--ok-bg); font-weight: 700; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .opt, .btn, .ruler i { transition: background-color .12s, border-color .12s, color .12s; }
+}
+</style>
+
+<div class="wrap">
+  <header class="tb">
+    <div>
+      <span class="lbl">Пән</span>
+      <h1 class="val">Территорияларды инженерлік абаттандыру</h1>
+    </div>
+    <div>
+      <span class="lbl">Материал</span>
+      <span class="val small">8–12 апта</span>
+    </div>
+    <div>
+      <span class="lbl">Сұрақ</span>
+      <span class="val small" id="tbCount">78</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="home-grid">
+      <div>
+        <h2 class="sect-title">Емтиханға дайындық тесті</h2>
+        <div class="toggles">
+          <label class="tg"><input type="checkbox" id="optShuffleQ"> <span>Сұрақтар ретін араластыру</span></label>
+          <label class="tg"><input type="checkbox" id="optShuffleA" checked> <span>Жауап нұсқаларын араластыру</span></label>
+        </div>
+      </div>
+      <div class="big-actions">
+        <button class="btn primary" id="startAll" type="button"></button>
+        <button class="btn" id="startRand" type="button">Кездейсоқ 20 сұрақ</button>
+      </div>
+      <div>
+        <h2 class="sect-title">Тақырып бойынша</h2>
+        <div class="toc" id="toc"></div>
+      </div>
+    </section>
+
+    <section id="quiz" hidden>
+      <div class="topbar">
+        <button class="linkbtn" id="back" type="button">← Мәзір</button>
+        <div class="stats" aria-live="off">
+          <span class="s-ok">Дұрыс: <b id="stOk">0</b></span>
+          <span class="s-bad">Қате: <b id="stBad">0</b></span>
+          <span id="stPos">1 / 1</span>
+        </div>
+      </div>
+      <div class="ruler" id="ruler" aria-hidden="true"></div>
+      <article class="sheet">
+        <p class="lbl" id="qmeta"></p>
+        <h2 id="qtext"></h2>
+        <div class="opts" id="opts" role="group" aria-labelledby="qtext"></div>
+        <p class="fb" id="fb" role="status" aria-live="polite"></p>
+        <div class="nav"><button class="btn primary" id="next" type="button" disabled>Келесі →</button></div>
+      </article>
+      <p class="hint">Пернетақта: 1–4 жауап таңдайды, Enter немесе → келесі сұраққа өтеді.</p>
+    </section>
+
+    <section id="result" hidden>
+      <div class="score">
+        <div class="big"><span id="rOk">0</span><small> / <span id="rTotal">0</span></small></div>
+        <div class="verdict" id="rVerdict"></div>
+        <div class="pct" id="rPct"></div>
+      </div>
+      <div class="res-actions">
+        <button class="btn primary" id="retryWrong" type="button">Қателерді қайталау</button>
+        <button class="btn" id="restart" type="button">Қайта бастау</button>
+        <button class="btn" id="toMenu" type="button">Мәзір</button>
+      </div>
+      <div id="wrongBox"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  var SECTIONS = [
+    { wk: '8-апта', name: 'Көлік және жаяу жүргінші инфрақұрылымы' },
+    { wk: '9-апта', name: 'Кедергісіз орта және әмбебап дизайн' },
+    { wk: '10-апта', name: 'Жасанды жабындар және төсем' },
+    { wk: '11-апта', name: 'Қаланы көгалдандыру жүйесі' },
+    { wk: '12-апта', name: 'Отырғызу және өсімдік ассортименті' }
+  ];
+  // Each question: q = text, o = options with the correct one FIRST, s = section index, no = number in the source file.
+  var DATA = [{"q":"Көліктік-жаяу жүргінші қаңқасына не кіреді?","o":["Көшелер, өтпе жолдар, тротуарлар және веложолдар","Тек саябақтар","Тек инженерлік құбырлар","Тек жасыл белдеулер"],"s":0,"no":1},{"q":"Аудандық магистральдың есептік жылдамдығы қанша?","o":["60–70 км/сағ","20–30 км/сағ","30–40 км/сағ","40–50 км/сағ"],"s":0,"no":2},{"q":"Жергілікті тұрғын көшесінің есептік жылдамдығы қанша?","o":["30–40 км/сағ","60–70 км/сағ","70–80 км/сағ","10–15 км/сағ"],"s":0,"no":3},{"q":"Ауладағы көлік қозғалысының шекті жылдамдығы қанша?","o":["20 км/сағ","30 км/сағ","40 км/сағ","60 км/сағ"],"s":0,"no":4},{"q":"Негізгі өтпе жолдың қозғалыс жолақтарының саны қанша?","o":["2 жолақ","1 жолақ","3 жолақ","4 жолақ"],"s":0,"no":5},{"q":"Негізгі өтпе жолдың жүру бөлігінің ені қандай?","o":["5,5–6,0 м","3,0–3,5 м","7,5–8,0 м","2,0–2,5 м"],"s":0,"no":6},{"q":"Екінші реттік өтпе жолдың ені қанша?","o":["3,5 м","2,5 м","5,5 м","6,5 м"],"s":0,"no":7},{"q":"Екінші реттік өтпе жолда айырылысу алаңдары қандай аралықпен қарастырылады?","o":["Әр 75 м сайын","Әр 25 м сайын","Әр 150 м сайын","Әр 300 м сайын"],"s":0,"no":8},{"q":"Екінші реттік өтпе жолдағы айырылысу алаңының өлшемі қандай?","o":["Ені 6 м, ұзындығы 15 м","Ені 3 м, ұзындығы 5 м","Ені 8 м, ұзындығы 8 м","Ені 10 м, ұзындығы 30 м"],"s":0,"no":9},{"q":"Тұйық өтпе жолдың ең үлкен ұзындығы қанша?","o":["150 м","75 м","200 м","300 м"],"s":0,"no":10},{"q":"Тұйық өтпе жолдың бұрылу алаңы кемінде қанша болуы тиіс?","o":["15 × 15 м","8 × 8 м","10 × 10 м","12 × 12 м"],"s":0,"no":11},{"q":"Жаяу жүргінші тротуарының ең кіші ені қанша?","o":["1,5 м","0,75 м","1,0 м","1,2 м"],"s":0,"no":12},{"q":"Адам көп жүретін жерде тротуардың ұсынылған ені қандай?","o":["2,25–3,0 м","0,75–1,0 м","1,0–1,2 м","4,5–5,0 м"],"s":0,"no":13},{"q":"Бір жаяу жүргінші жолағының есептік ені қанша?","o":["0,75 м","0,5 м","1,5 м","2,0 м"],"s":0,"no":14},{"q":"Велосипед жолының бір жолағының ені қанша?","o":["1,5 м","0,75 м","2,75 м","3,5 м"],"s":0,"no":15},{"q":"Жаяу жүргінші жолының рұқсат етілетін ең үлкен көлденең еңісі қанша?","o":["2 %","5 %","8 %","10 %"],"s":0,"no":16},{"q":"Өрт техникасы өтетін жолдың дәрісте көрсетілген ең кіші ені қанша?","o":["6 м","3 м","4 м","5 м"],"s":0,"no":17},{"q":"Өрт техникасы өтетін жолдың дәрісте көрсетілген ең үлкен еңісі қанша?","o":["10 %","2 %","5 %","15 %"],"s":0,"no":18},{"q":"Қозғалысты кеңістікте саралау нені білдіреді?","o":["Көлікті шетке бағыттап, ішкі аумақты жаяу жүргіншіге беру","Барлық көлікті алаң ортасына жинау","Тротуарларды жою","Веложолдарды тұраққа айналдыру"],"s":0,"no":19},{"q":"«Көліксіз аула» тұжырымдамасында автотұрақ қайда орналастырылуы мүмкін?","o":["Жерасты немесе стилобат астында","Балалар алаңының ортасында","Жаяу жолдың үстінде","Көгалдың барлық бөлігінде"],"s":0,"no":20},{"q":"Кедергісіз орта дегеніміз не?","o":["Физикалық және ақпараттық кедергілері азайтылған орта","Тек автокөлікке арналған аумақ","Тек баспалдақпен байланысқан орта","Тек сәндік көгалдандырылған орта"],"s":1,"no":21},{"q":"Әмбебап дизайнның мақсаты қандай?","o":["Ортаны барлық адам пайдалана алатындай жобалау","Әр топқа міндетті түрде бөлек ғимарат салу","Тек фасадты безендіру","Тек автотұрақты ұлғайту"],"s":1,"no":22},{"q":"Әмбебап дизайнның неше негізгі қағидаты бар?","o":["7","5","9","12"],"s":1,"no":23},{"q":"Үздіксіз қолжетімді бағыт қай жерлерді байланыстырады?","o":["Аялдама не тұрақтан ғимарат кіреберісіне дейін","Тек екі автотұрақты","Тек шатыр мен жертөлені","Тек гүлзар мен субұрқақты"],"s":1,"no":24},{"q":"Қолжетімді бағытта демалыс орындары қандай аралықпен қарастырылады?","o":["Әр 100–150 м сайын","Әр 10–20 м сайын","Әр 300–400 м сайын","Әр 500–600 м сайын"],"s":1,"no":25},{"q":"ЖШТ автотұрағы кіреберістен қанша қашықтықтан алыс болмауы тиіс?","o":["50 м","100 м","150 м","200 м"],"s":1,"no":26},{"q":"Пандустың қалыпты ең үлкен бойлық еңісі қандай?","o":["5 % (1:20)","2 % (1:50)","8 % (1:12)","10 % (1:10)"],"s":1,"no":27},{"q":"Тар жағдайда пандус еңісі қаншаға дейін рұқсат етіледі?","o":["8 % (1:12)","3 % (1:33)","12 % (1:8)","15 % (1:7)"],"s":1,"no":28},{"q":"Тар жағдайда 8 % еңіспен пандус маршындағы көтерілу биіктігі қаншадан аспайды?","o":["0,8 м","0,3 м","1,5 м","2,0 м"],"s":1,"no":29},{"q":"Пандустың ең кіші ені қанша?","o":["1,2 м","0,75 м","0,9 м","1,8 м"],"s":1,"no":30},{"q":"Пандустың аралық алаңы кемінде қандай ұзындықта болуы тиіс?","o":["1,5 м","0,8 м","1,0 м","2,5 м"],"s":1,"no":31},{"q":"Пандустың аралық алаңы қандай аралықпен қарастырылады?","o":["Әр 8–9 м сайын","Әр 2–3 м сайын","Әр 15–20 м сайын","Әр 30 м сайын"],"s":1,"no":32},{"q":"Кіреберіс алдындағы алаңның ең кіші өлшемі қандай?","o":["2,2 × 2,2 м","1,0 × 1,0 м","1,2 × 1,2 м","1,5 × 1,5 м"],"s":1,"no":33},{"q":"Пандустың екі деңгейлі тұтқалары қандай биіктікте орналасады?","o":["0,7 және 0,9 м","0,4 және 0,6 м","1,0 және 1,2 м","0,9 және 1,4 м"],"s":1,"no":34},{"q":"Пандус тұтқаларының ұшы қанша ұзартылуы тиіс?","o":["0,3 м","0,05 м","0,1 м","0,6 м"],"s":1,"no":35},{"q":"Пандус жиегіндегі бортиктің ең кіші биіктігі қанша?","o":["0,05 м","0,01 м","0,15 м","0,3 м"],"s":1,"no":36},{"q":"Екі кресло-арба қарсы өтетін жолдың ең кіші ені қанша?","o":["2,0 м","0,9 м","1,2 м","1,5 м"],"s":1,"no":37},{"q":"Кресло-арбаның бұрылу аймағының диаметрі қанша?","o":["1,5–1,7 м","0,9–1,1 м","1,0–1,2 м","2,5–3,0 м"],"s":1,"no":38},{"q":"Есік ойығының ең кіші ені қанша?","o":["0,9 м","0,6 м","0,7 м","0,8 м"],"s":1,"no":39},{"q":"Есік табалдырығының ең үлкен биіктігі қанша?","o":["0,014 м","0,05 м","0,10 м","0,15 м"],"s":1,"no":40},{"q":"Қатты тұтас жабынға қай материал жатады?","o":["Асфальтбетон","Резеңке үгіндісі","Қиыршықтас","Жасанды шөп"],"s":2,"no":41},{"q":"Қатты құрама жабынға қай материал жатады?","o":["Бетон төсемтастары","Құйылған асфальт","Тығыздалған топырақ","Резеңке жабын"],"s":2,"no":42},{"q":"Жұмсақ жабынға қай материал жатады?","o":["Қиыршықтас","Цементбетон","Клинкер кірпіш","Тұтас асфальтбетон"],"s":2,"no":43},{"q":"Серпімді жабынға қай материал жатады?","o":["Резеңке үгінді жабын","Табиғи тас тақта","Цементбетон","Гранит текше"],"s":2,"no":44},{"q":"Көгалды торлы жабынның ерекшелігі қандай?","o":["Су өткізетін тор ұяшықтарына көгал егіледі","Тұтас су өткізбейтін бетон болады","Тек жабық ғимаратта қолданылады","Міндетті түрде ағаштан жасалады"],"s":2,"no":45},{"q":"Жабынның үстіңгі қабаты қандай әсерлерді тікелей қабылдайды?","o":["Қозғалыс, үйкеліс және ауа райы әсерін","Тек жерасты суының қысымын","Тек топырақтың тығыздалуын","Тек іргетастың жүктемесін"],"s":2,"no":46},{"q":"Құрама жабынның төсеу қабатының қалыңдығы қанша?","o":["30–50 мм","5–10 мм","80–100 мм","150–200 мм"],"s":2,"no":47},{"q":"Төсеу қабаты көбіне неден жасалады?","o":["Құм немесе құм-цемент қоспасынан","Тек ағаш тақтайдан","Тек резеңкеден","Тек металл парақтан"],"s":2,"no":48},{"q":"Негіз қабатының негізгі міндеті қандай?","o":["Жүктемені тарату","Жабынның түсін өзгерту","Ағаштарды суару","Қарды жинау"],"s":2,"no":49},{"q":"Негізге арналған шағылтастың дәрісте көрсетілген ірілігі қандай?","o":["20–40 мм","1–2 мм","60–90 мм","100–150 мм"],"s":2,"no":50},{"q":"Жер төсемі дегеніміз не?","o":["Тығыздалған табиғи немесе үйінді топырақ","Жабынның сәндік бояуы","Төсемтастың жігі","Су қабылдағыш тор"],"s":2,"no":51},{"q":"Жабын қабаттарының қалыңдығы неге байланысты?","o":["Жүктеме, топырақ және климатқа","Тек түсіне","Тек ғимараттың атауына","Тек жарықтандыруға"],"s":2,"no":52},{"q":"Астана климатында жабын жобалауда не ерекше маңызды?","o":["Аяздан қорғау және су бұру","Тек көлеңке жасау","Тек жылуды көбейту","Тек шөп отырғызу"],"s":2,"no":53},{"q":"Ойма тереңдігі H қалай анықталады?","o":["Барлық құрылымдық қабаттардың қалыңдығын қосу арқылы","Тек үстіңгі жабын бойынша","Тек жиектас биіктігі бойынша","Тек плитка ұзындығы бойынша"],"s":2,"no":54},{"q":"Жиектас қандай қызмет атқарады?","o":["Жабын шетін бекітіп, су ағынын бағыттайды","Тек ағашты қорғайды","Тек жарық береді","Тек көлік жылдамдығын өлшейді"],"s":2,"no":55},{"q":"Көктайғақ кезінде жабынға қандай материал себуге болады?","o":["Құм немесе гранит үгіндісі","Тек саз","Тек цемент ерітіндісі","Тек бояу"],"s":2,"no":56},{"q":"Тұзды мұз еріткіштердің артық қолданылуы қандай зиян келтіруі мүмкін?","o":["Бетон, табиғи тас және өсімдіктерге зиян келтіреді","Жабынды міндетті түрде нығайтады","Топырақтың тұзын толық жояды","Барлық өсімдіктің өсуін тездетеді"],"s":2,"no":57},{"q":"Жабынның навигациялық қызметі нені білдіреді?","o":["Түсі мен төсеу суреті арқылы қозғалыс бағытын көрсету","Тек су жинау","Тек қар сақтау","Тек көлікті өлшеу"],"s":2,"no":58},{"q":"Қала көгалдандыруы инженерлік абаттандырумен қалай байланысады?","o":["Жолдар, су бұру және инженерлік желілермен бірге жобаланады","Тек құрылыс біткен соң қарастырылады","Инженерлік желілерден тәуелсіз","Тек интерьер жобасында ескеріледі"],"s":3,"no":59},{"q":"Жасыл екпелердің санитариялық қызметі қандай?","o":["Ауадағы шаңды ұстап, ортаның сапасын жақсарту","Көлік санын арттыру","Асфальтты қыздыру","Топырақты тұздандыру"],"s":3,"no":60},{"q":"Жазда көгал беті қызған асфальттан қанша градусқа дейін салқын болуы мүмкін?","o":["10–20 °C","1–2 °C","30–40 °C","50–60 °C"],"s":3,"no":61},{"q":"Тығыз жасыл белдеу желді өз биіктігінен қанша есе қашықтыққа дейін әлсірете алады?","o":["15–20 есе","2–3 есе","5–7 есе","40–50 есе"],"s":3,"no":62},{"q":"Өсімдік тамырларының инженерлік қызметі қандай?","o":["Беткейлерді бекітіп, топырақ шайылуын азайту","Топырақ шайылуын күшейту","Су өткізбейтін қабат түзу","Жер асты құбырларын ауыстыру"],"s":3,"no":63},{"q":"Жасыл екпелердің сәулет-композициялық қызметі қандай?","o":["Кеңістікті бөлу, біріктіру және көрініс қалыптастыру","Тек көлік ағынын есептеу","Тек электр желісін тарту","Тек жол енін азайту"],"s":3,"no":64},{"q":"Жасыл екпелер мақсаттары бойынша қалай бөлінеді?","o":["Жалпы, шектеулі және арнайы мақсаттағы","Тек жазғы және қысқы","Тек биік және аласа","Тек жасанды және табиғи"],"s":3,"no":65},{"q":"Жалпы мақсаттағы жасыл аумаққа не жатады?","o":["Қоғамдық саябақ","Жеке мекеме ауласындағы жабық бақ","Өндірістің санитариялық-қорғаныш жолағы","Арнайы қорғаныш екпесі"],"s":3,"no":66},{"q":"Шектеулі мақсаттағы көгалдандыруға не мысал болады?","o":["Мектеп аумағындағы жасыл екпе","Қалалық ашық саябақ","Жалпы қалалық желекжол","Қоғамдық жағалау саябағы"],"s":3,"no":67},{"q":"Арнайы мақсаттағы екпелерге не жатады?","o":["Санитариялық-қорғаныш екпелері","Қоғамдық серуен саябағы","Қалалық ашық сквер","Орталық демалыс бағы"],"s":3,"no":68},{"q":"Көгалдандыру жүйесінің маңызды қасиеті қандай?","o":["Үздіксіздік пен қолжетімділік","Жасыл аумақтарды оқшаулау","Тек бір нүктеге шоғырландыру","Барлық көшені көгалсыз қалдыру"],"s":3,"no":69},{"q":"Көгалдандыру деңгейі қандай қатынаспен есептеледі?","o":["Көгалданған ауданның жалпы аумақ ауданына қатынасымен","Ғимарат санының ағаш санына қатынасымен","Тротуар енінің жол еніне қатынасымен","Жол ұзындығының ғимарат биіктігіне қатынасымен"],"s":3,"no":70},{"q":"Қалалық көгалдандыруда ассортимент дегеніміз не?","o":["Отырғызуға таңдалған өсімдік түрлерінің жиынтығы","Жол жабындарының жиынтығы","Құрылыс техникасының тізімі","Көлік тұрақтарының саны"],"s":4,"no":71},{"q":"Тар көшеде ағаш отырғызғанда қандай факторды ескеру қажет?","o":["Жерасты инженерлік желілерін","Тек жарнама тақталарын","Тек ғимарат атауын","Тек жол белгілерінің түсін"],"s":4,"no":72},{"q":"Жол бойындағы өсімдіктер үшін қандай қасиет маңызды?","o":["Тұзға және мұзға қарсы реагенттерге төзімділік","Тек үлкен гүлдері болуы","Тек тропиктік болуы","Тек тез жапырақ түсіруі"],"s":4,"no":73},{"q":"Өсімдік таңдау кезінде жергілікті климатты неге ескереді?","o":["Өсімдіктің өміршеңдігі мен тұрақты өсуі үшін","Тек көлік жылдамдығын анықтау үшін","Тек тас өлшемін таңдау үшін","Тек жолақ санын өзгерту үшін"],"s":4,"no":74},{"q":"Көгалдандыру композициясының мақсаты қандай?","o":["Кеңістіктің көркем және функционалдық құрылымын қалыптастыру","Тек су құбырын есептеу","Тек іргетас тереңдігін өлшеу","Тек көлік тұрағын белгілеу"],"s":4,"no":75},{"q":"Ағаштың тәжі мен тамыр жүйесі жобалауда неге ескеріледі?","o":["Оларға жерүсті және жерасты кеңістігі қажет","Олар инженерлік желілерге еш әсер етпейді","Олар тек сәндік сызбада болады","Оларға топырақ көлемі қажет емес"],"s":4,"no":76},{"q":"Топырақтың тұздануы өсімдікке қалай әсер етуі мүмкін?","o":["Өсуін нашарлатып, зақым келтіруі мүмкін","Әрқашан өсуді жақсартады","Барлық түрге бірдей пайдалы","Тек жапырақ түсін өзгертеді"],"s":4,"no":77},{"q":"Көгалдандыру шешімдері жобаның қай кезеңінде ескерілуі тиіс?","o":["Алғашқы жобалау кезеңінен бастап","Тек пайдалануға берілген соң","Тек құрылыс аяқталған соң","Тек жиһаз таңдау кезінде"],"s":4,"no":78}];
+  var LETTERS = ['A', 'B', 'C', 'D'];
+
+  function $(id) { return document.getElementById(id); }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  var S = { queue: [], i: 0, picked: [], ok: 0, bad: 0 };
+
+  function show(name) {
+    ['home', 'quiz', 'result'].forEach(function (n) { $(n).hidden = (n !== name); });
+    window.scrollTo(0, 0);
+  }
+
+  function build(list, shuffleQ, shuffleA) {
+    var qs = shuffleQ ? shuffle(list) : list.slice();
+    return qs.map(function (src) {
+      var opts = src.o.map(function (t, k) { return { t: t, ok: k === 0 }; });
+      if (shuffleA) opts = shuffle(opts);
+      return { src: src, opts: opts };
+    });
+  }
+
+  function start(list, forceShuffleQ) {
+    var sq = forceShuffleQ || $('optShuffleQ').checked;
+    S.queue = build(list, sq, $('optShuffleA').checked);
+    S.i = 0; S.ok = 0; S.bad = 0;
+    S.picked = S.queue.map(function () { return null; });
+    var r = $('ruler');
+    r.textContent = '';
+    r.className = 'ruler' + (S.queue.length > 40 ? ' dense' : '');
+    S.queue.forEach(function () { r.appendChild(document.createElement('i')); });
+    show('quiz');
+    renderQ();
+  }
+
+  function renderStats() {
+    $('stOk').textContent = S.ok;
+    $('stBad').textContent = S.bad;
+    $('stPos').textContent = (S.i + 1) + ' / ' + S.queue.length;
+  }
+
+  function renderRuler() {
+    var ticks = $('ruler').children;
+    for (var k = 0; k < ticks.length; k++) {
+      var p = S.picked[k], cls = '';
+      if (p !== null) cls = S.queue[k].opts[p].ok ? 'ok' : 'bad';
+      else if (k === S.i) cls = 'cur';
+      ticks[k].className = cls;
+    }
+  }
+
+  function renderQ() {
+    var item = S.queue[S.i], src = item.src;
+    var sec = SECTIONS[src.s];
+    $('qmeta').textContent = sec.wk + ' · сұрақ № ' + src.no;
+    $('qtext').textContent = src.q;
+    var box = $('opts');
+    box.textContent = '';
+    box.classList.remove('locked');
+    item.opts.forEach(function (o, k) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      var mk = document.createElement('span');
+      mk.className = 'mk'; mk.textContent = LETTERS[k];
+      var tx = document.createElement('span');
+      tx.className = 'tx'; tx.textContent = o.t;
+      b.appendChild(mk); b.appendChild(tx);
+      b.addEventListener('click', function () { answer(k); });
+      box.appendChild(b);
+    });
+    var fb = $('fb'); fb.textContent = ''; fb.className = 'fb';
+    var nx = $('next');
+    nx.disabled = true;
+    nx.textContent = (S.i === S.queue.length - 1) ? 'Нәтижені көру' : 'Келесі →';
+    renderStats();
+    renderRuler();
+  }
+
+  function answer(k) {
+    if (S.picked[S.i] !== null) return;
+    S.picked[S.i] = k;
+    var item = S.queue[S.i];
+    var right = item.opts[k].ok;
+    if (right) S.ok++; else S.bad++;
+    var box = $('opts');
+    box.classList.add('locked');
+    var btns = box.children;
+    for (var j = 0; j < btns.length; j++) {
+      var mk = btns[j].firstChild;
+      if (item.opts[j].ok) { btns[j].classList.add('ok'); mk.textContent = '✓'; }
+      else if (j === k) { btns[j].classList.add('bad'); mk.textContent = '✕'; }
+    }
+    var fb = $('fb');
+    if (right) { fb.textContent = 'Дұрыс!'; fb.className = 'fb ok'; }
+    else {
+      var ci = item.opts.findIndex(function (o) { return o.ok; });
+      fb.textContent = 'Қате. Дұрыс жауап: ' + LETTERS[ci] + '.';
+      fb.className = 'fb bad';
+    }
+    $('next').disabled = false;
+    $('next').focus({ preventScroll: true });
+    renderStats();
+    renderRuler();
+  }
+
+  function next() {
+    if (S.picked[S.i] === null) return;
+    if (S.i === S.queue.length - 1) { finish(); return; }
+    S.i++;
+    renderQ();
+    window.scrollTo(0, 0);
+  }
+
+  function verdict(p) {
+    if (p >= 90) return 'Өте жақсы';
+    if (p >= 70) return 'Жақсы';
+    if (p >= 50) return 'Қанағаттанарлық';
+    return 'Қайталап шығыңыз';
+  }
+
+  function finish() {
+    var total = S.queue.length;
+    var pct = Math.round(S.ok / total * 100);
+    $('rOk').textContent = S.ok;
+    $('rTotal').textContent = total;
+    $('rPct').textContent = pct + ' %';
+    $('rVerdict').textContent = verdict(pct);
+    var wrong = [];
+    S.queue.forEach(function (item, k) {
+      var p = S.picked[k];
+      if (p !== null && !item.opts[p].ok) wrong.push({ item: item, picked: p });
+    });
+    var box = $('wrongBox');
+    box.textContent = '';
+    S.wrongSrc = wrong.map(function (w) { return w.item.src; });
+    $('retryWrong').hidden = wrong.length === 0;
+    if (wrong.length === 0) {
+      var ok = document.createElement('p');
+      ok.className = 'all-ok';
+      ok.textContent = 'Барлық сұраққа дұрыс жауап бердіңіз.';
+      box.appendChild(ok);
+    } else {
+      var h = document.createElement('h2');
+      h.className = 'sect-title';
+      h.textContent = 'Қателер (' + wrong.length + ')';
+      box.appendChild(h);
+      var ul = document.createElement('ul');
+      ul.className = 'wrong-list';
+      wrong.forEach(function (w) {
+        var li = document.createElement('li');
+        var q = document.createElement('div');
+        q.className = 'q'; q.textContent = w.item.src.q;
+        li.appendChild(q);
+        [['b', 'Сіз', w.item.opts[w.picked].t],
+         ['g', 'Дұрыс', w.item.opts.filter(function (o) { return o.ok; })[0].t]].forEach(function (r) {
+          var row = document.createElement('div');
+          row.className = 'a';
+          var tag = document.createElement('span');
+          tag.className = 'tag ' + r[0]; tag.textContent = r[1];
+          var tx = document.createElement('span');
+          tx.textContent = r[2];
+          row.appendChild(tag); row.appendChild(tx);
+          li.appendChild(row);
+        });
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    S.lastList = S.queue.map(function (it) { return it.src; });
+    show('result');
+  }
+
+  // home
+  $('tbCount').textContent = DATA.length;
+  $('startAll').textContent = 'Барлық сұрақтар (' + DATA.length + ')';
+  var toc = $('toc');
+  SECTIONS.forEach(function (sec, idx) {
+    var list = DATA.filter(function (q) { return q.s === idx; });
+    var b = document.createElement('button');
+    b.type = 'button';
+    var a = document.createElement('span'); a.className = 'wk'; a.textContent = sec.wk;
+    var n = document.createElement('span'); n.className = 'nm'; n.textContent = sec.name;
+    var c = document.createElement('span'); c.className = 'ct'; c.textContent = list.length + ' сұрақ';
+    b.appendChild(a); b.appendChild(n); b.appendChild(c);
+    b.addEventListener('click', function () { start(list, false); });
+    toc.appendChild(b);
+  });
+  $('startAll').addEventListener('click', function () { start(DATA, false); });
+  $('startRand').addEventListener('click', function () { start(shuffle(DATA).slice(0, 20), true); });
+  $('back').addEventListener('click', function () { show('home'); });
+  $('toMenu').addEventListener('click', function () { show('home'); });
+  $('next').addEventListener('click', next);
+  $('restart').addEventListener('click', function () { start(S.lastList, false); });
+  $('retryWrong').addEventListener('click', function () { if (S.wrongSrc && S.wrongSrc.length) start(S.wrongSrc, true); });
+
+  document.addEventListener('keydown', function (e) {
+    if ($('quiz').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key >= '1' && e.key <= '4') {
+      if (S.picked[S.i] === null) answer(Number(e.key) - 1);
+    } else if ((e.key === 'Enter' || e.key === 'ArrowRight') && S.picked[S.i] !== null && document.activeElement !== $('next')) {
+      e.preventDefault();
+      next();
+    }
+  });
+})();
+</script>
